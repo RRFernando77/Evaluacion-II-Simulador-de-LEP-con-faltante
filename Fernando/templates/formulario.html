@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de LEP con Faltante</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/input.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/button.css') }}">
+</head>
+
+<body>
+    <div class="container mg-10">
+        <h1>Simulador de LEP con Faltante</h1>
+        <form class="" id="formulario">
+            <label for="demanda_media">Demanda media:</label>
+            <input placeholder="100 (unidades por período)" type="number" name="demanda_media" id="demanda_media"
+                required><br>
+
+            <label for="desviacion_demanda">Desviación estándar de la demanda:</label>
+            <input placeholder="20 (unidades por período)" type="number" name="desviacion_demanda"
+                id="desviacion_demanda" required><br>
+
+            <label for="tiempo_entrega_media">Tiempo de entrega medio:</label>
+            <input placeholder="5 (períodos)" type="number" name="tiempo_entrega_media" id="tiempo_entrega_media"
+                required><br>
+
+            <label for="desviacion_tiempo_entrega">Desviación estándar del tiempo de entrega:</label>
+            <input placeholder="2 (períodos)" type="number" name="desviacion_tiempo_entrega"
+                id="desviacion_tiempo_entrega" required><br>
+
+            <label for="costo_pedido">Costo de hacer un pedido:</label>
+            <input placeholder="1000 (moneda por pedido)" type="number" name="costo_pedido" id="costo_pedido"
+                required><br>
+
+            <label for="costo_faltante">Costo de faltante por unidad:</label>
+            <input placeholder="50 (moneda por unidad)" type="number" name="costo_faltante" id="costo_faltante"
+                required><br>
+
+            <label for="costo_inventario">Costo de mantener una unidad en inventario por unidad de tiempo:</label>
+            <input placeholder="10 (moneda por unidad por período)" type="number" name="costo_inventario"
+                id="costo_inventario" required><br>
+
+            <label for="cantidad_inicial_inventario">Cantidad inicial en inventario:</label>
+            <input placeholder="100 (unidades)" type="number" name="cantidad_inicial_inventario"
+                id="cantidad_inicial_inventario" required><br>
+
+            <label for="tiempo_simulacion">Tiempo de simulación:</label>
+            <input placeholder="20 (períodos)" type="number" name="tiempo_simulacion" id="tiempo_simulacion"
+                required><br>
+
+            <div class="center">
+                <button class="btn btn-primary" type="button" onclick="enviarDatos()">Simular</button>
+            </div>
+
+        </form>
+
+        <div class="start mg-10" id="resultados"></div>
+
+    </div>
+
+
+    <script>
+        function enviarDatos() {
+            var formulario = document.getElementById("formulario");
+
+            var datos = {
+                "demanda_media": formulario.demanda_media.value,
+                "desviacion_demanda": formulario.desviacion_demanda.value,
+                "tiempo_entrega_media": formulario.tiempo_entrega_media.value,
+                "desviacion_tiempo_entrega": formulario.desviacion_tiempo_entrega.value,
+                "costo_pedido": formulario.costo_pedido.value,
+                "costo_faltante": formulario.costo_faltante.value,
+                "costo_inventario": formulario.costo_inventario.value,
+                "cantidad_inicial_inventario": formulario.cantidad_inicial_inventario.value,
+                "tiempo_simulacion": formulario.tiempo_simulacion.value
+            };
+
+            fetch('/simular_lep_con_faltante', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(datos)
+            })
+                .then(response => response.json())
+                .then(data => {
+
+                    if (data.estado != "exitoso") {
+                        // Mostrar los resultados en el div "resultados"
+                        document.getElementById("resultados").innerHTML = `
+                        <h2>Error al ejecutar simulación:</h2>
+                        <p>${data.error}</p>
+                        `;
+                        return;
+                    }
+
+                    // Mostrar los resultados en el div "resultados"
+                    document.getElementById("resultados").innerHTML = ``
+
+
+                    data.info.forEach(estados => {
+                        document.getElementById("resultados").innerHTML += `<p>${estados}</p>`;
+                    });
+
+                    document.getElementById("resultados").innerHTML += `
+                    <h2>Resultados de la simulación:</h2>
+                    <p><strong>Costo total de pedidos:</strong> ${data.total_costo_pedido}</p>
+                    <p><strong>Costo total de faltante:</strong> ${data.total_costo_faltante}</p>
+                    <p><strong>Costo total de inventario:</strong> ${data.total_costo_inventario}</p>
+                `;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+
+</html>
